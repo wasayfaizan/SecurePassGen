@@ -40,13 +40,65 @@ def generate_password(minimum_length, numbers=True, special_characters=True):
     return ''.join(password)
 
 
-# Ask the user for input
-try:
-    minimum_length = int(input("Enter the desired password length: "))
-    include_numbers = input("Include numbers? (yes/no): ").strip().lower() == 'yes'
-    include_special_chars = input("Include special characters? (yes/no): ").strip().lower() == 'yes'
+def read_passwords(file_path='passwords.txt'):
+    passwords = {}
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                if ': ' in line:
+                    place, password = line.strip().split(': ', 1)
+                    passwords[place] = password
+                else:
+                    print(f"Skipping malformed line: {line.strip()}")
+    except FileNotFoundError:
+        pass
+    return passwords
 
-    # Generate and print the password
-    print(generate_password(minimum_length, include_numbers, include_special_chars))
-except ValueError as e:
-    print(f"Error: {e}")
+
+def write_passwords(passwords, file_path='passwords.txt'):
+    with open(file_path, 'w') as file:
+        for place, password in passwords.items():
+            file.write(f"{place}: {password}\n")
+
+
+def main():
+    passwords = read_passwords()
+
+    # Ask the user for input
+    try:
+        minimum_length = int(input("Enter the desired password length: "))
+        include_numbers = input("Include numbers? (yes/no): ").strip().lower() == 'yes'
+        include_special_chars = input("Include special characters? (yes/no): ").strip().lower() == 'yes'
+
+        # Generate and print the password
+        password = generate_password(minimum_length, include_numbers, include_special_chars)
+        print(f"Generated password: {password}")
+
+        # Prompt user to see if they like the password
+        use_password = input("Do you like this password and would you like to use it? (yes/no): ").strip().lower()
+
+        if use_password == 'yes':
+            place = input("Where will you use this password? ").strip()
+            passwords[place] = password
+            write_passwords(passwords)
+            print("Password stored successfully.")
+        else:
+            print("Password not stored.")
+
+        # Ask the user if they want to update an existing password
+        update_password = input("Do you want to update an existing password? (yes/no): ").strip().lower()
+        if update_password == 'yes':
+            place_to_update = input("Which place's password do you want to update? ").strip()
+            if place_to_update in passwords:
+                new_password = input(f"Enter the new password for {place_to_update}: ").strip()
+                passwords[place_to_update] = new_password
+                write_passwords(passwords)
+                print(f"Password for {place_to_update} updated successfully.")
+            else:
+                print(f"No password stored for {place_to_update}.")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+if __name__ == "__main__":
+    main()
